@@ -1,0 +1,459 @@
+{
+ "@context": [
+  "https://geojson.org/geojson-ld/geojson-context.jsonld",
+  {
+   "@version": "1.1",
+   "wx": "https://api.weather.gov/ontology#",
+   "@vocab": "https://api.weather.gov/ontology#"
+  }
+ ],
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.56b2e72b0cbdc741c465716ce47d5a8fa5c1d9c3.001.1",
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -100.99,
+       39.85
+      ],
+      [
+       -101.33,
+       39.75
+      ],
+      [
+       -101.5,
+       39.8
+      ],
+      [
+       -101.38,
+       40
+      ],
+      [
+       -101.02,
+       40
+      ],
+      [
+       -100.99,
+       39.85
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.56b2e72b0cbdc741c465716ce47d5a8fa5c1d9c3.001.1",
+    "@type": "wx:Alert",
+    "id": "urn:oid:2.49.0.1.840.0.56b2e72b0cbdc741c465716ce47d5a8fa5c1d9c3.001.1",
+    "areaDesc": "Cheyenne, KS; Rawlins, KS",
+    "geocode": {
+     "SAME": [
+      "020023",
+      "020153"
+     ],
+     "UGC": [
+      "KSC023",
+      "KSC153"
+     ]
+    },
+    "affectedZones": [
+     "https://api.weather.gov/zones/county/KSC023",
+     "https://api.weather.gov/zones/county/KSC153"
+    ],
+    "references": [
+     {
+      "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.696bd343a3620c9504dca4d9da1593dd8c443107.001.1",
+      "identifier": "urn:oid:2.49.0.1.840.0.696bd343a3620c9504dca4d9da1593dd8c443107.001.1",
+      "sender": "w-nws.webmaster@noaa.gov",
+      "sent": "2026-09-18T18:38:00-05:00"
+     },
+     {
+      "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e44a270e8e4dcf759ca9d2d94e85215f7132c4bc.002.1",
+      "identifier": "urn:oid:2.49.0.1.840.0.e44a270e8e4dcf759ca9d2d94e85215f7132c4bc.002.1",
+      "sender": "w-nws.webmaster@noaa.gov",
+      "sent": "2026-09-18T18:47:00-05:00"
+     },
+     {
+      "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.627af4613ef662113fa8c08dbc9487b1ffcd5e16.002.1",
+      "identifier": "urn:oid:2.49.0.1.840.0.627af4613ef662113fa8c08dbc9487b1ffcd5e16.002.1",
+      "sender": "w-nws.webmaster@noaa.gov",
+      "sent": "2026-09-18T18:56:00-05:00"
+     },
+     {
+      "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.414d01045e5079624378f857fe5c35676c7ca9fd.001.1",
+      "identifier": "urn:oid:2.49.0.1.840.0.414d01045e5079624378f857fe5c35676c7ca9fd.001.1",
+      "sender": "w-nws.webmaster@noaa.gov",
+      "sent": "2026-09-18T19:11:00-05:00"
+     }
+    ],
+    "sent": "2026-09-18T19:25:00-05:00",
+    "effective": "2026-09-18T19:25:00-05:00",
+    "onset": "2026-09-18T19:25:00-05:00",
+    "expires": "2026-09-18T19:45:00-05:00",
+    "ends": "2026-09-18T19:45:00-05:00",
+    "status": "Actual",
+    "messageType": "Update",
+    "category": "Met",
+    "severity": "Severe",
+    "certainty": "Observed",
+    "urgency": "Immediate",
+    "event": "Severe Thunderstorm Warning",
+    "sender": "w-nws.webmaster@noaa.gov",
+    "senderName": "NWS Goodland KS",
+    "headline": "Severe Thunderstorm Warning issued September 18 at 7:25PM CDT until September 18 at 7:45PM CDT by NWS Goodland KS",
+    "description": "At 724 PM CDT, a severe thunderstorm was located 9 miles north of\nMcDonald, or 14 miles southeast of Benkelman, moving northeast at 25\nmph.\n\nHAZARD...60 mph wind gusts and quarter size hail.\n\nSOURCE...Radar indicated.\n\nIMPACT...Hail damage to vehicles is expected. Expect wind damage to\nroofs, siding, and trees.\n\nThis severe thunderstorm will remain over mainly rural areas of east\ncentral Cheyenne and northwestern Rawlins Counties in northwestern\nKansas, including the following locations... Blakeman and Beardsley.",
+    "instruction": "For your protection move to an interior room on the lowest floor of a\nbuilding.\n\nThis thunderstorm will produce strong winds resulting in areas of\nnear zero visibility in blowing dirt. Use extreme caution if you must\ntravel and be alert for rapidly changing visibility.\n\nThis thunderstorm is producing accumulating hail, which will make\ndriving hazardous, similar to snow or ice. If you must travel, be\naware of rapidly changing road conditions.\n\nTorrential rainfall is occurring with this storm, and may lead to\nflash flooding. Do not drive your vehicle through flooded roadways.",
+    "response": "Shelter",
+    "note": null,
+    "parameters": {
+     "AWIPSidentifier": [
+      "SVSGLD"
+     ],
+     "WMOidentifier": [
+      "WWUS53 KGLD 190025"
+     ],
+     "NWSheadline": [
+      "A SEVERE THUNDERSTORM WARNING REMAINS IN EFFECT UNTIL 745 PM CDT FOR EAST CENTRAL CHEYENNE AND NORTHWESTERN RAWLINS COUNTIES IN NORTHWESTERN KANSAS"
+     ],
+     "eventMotionDescription": [
+      "2026-09-19T00:24:00-00:00...storm...233DEG...24KT...39.91,-101.34"
+     ],
+     "windThreat": [
+      "RADAR INDICATED"
+     ],
+     "maxWindGust": [
+      "60 MPH"
+     ],
+     "hailThreat": [
+      "RADAR INDICATED"
+     ],
+     "maxHailSize": [
+      "1.00"
+     ],
+     "BLOCKCHANNEL": [
+      "EAS",
+      "NWEM",
+      "CMAS"
+     ],
+     "EAS-ORG": [
+      "WXR"
+     ],
+     "VTEC": [
+      "/O.CON.KGLD.SV.W.0321.000000T0000Z-260919T0045Z/"
+     ],
+     "eventEndingTime": [
+      "2026-09-18T19:45:00-05:00"
+     ]
+    },
+    "scope": "Public",
+    "code": "IPAWSv1.0",
+    "language": "en-US",
+    "web": "http://www.weather.gov",
+    "eventCode": {
+     "SAME": [
+      "SVS"
+     ],
+     "NationalWeatherService": [
+      "SVW"
+     ]
+    }
+   }
+  },
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2c7982643a893cccf2995b78dd630b2cf74639d6.001.1",
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -104.67,
+       33
+      ],
+      [
+       -104.75,
+       33.08
+      ],
+      [
+       -104.51,
+       33.35
+      ],
+      [
+       -104.31,
+       33.16
+      ],
+      [
+       -104.67,
+       33
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2c7982643a893cccf2995b78dd630b2cf74639d6.001.1",
+    "@type": "wx:Alert",
+    "id": "urn:oid:2.49.0.1.840.0.2c7982643a893cccf2995b78dd630b2cf74639d6.001.1",
+    "areaDesc": "Chaves County Plains",
+    "geocode": {
+     "SAME": [
+      "035005"
+     ],
+     "UGC": [
+      "NMZ238"
+     ]
+    },
+    "affectedZones": [
+     "https://api.weather.gov/zones/forecast/NMZ238"
+    ],
+    "references": [],
+    "sent": "2026-09-18T18:26:00-06:00",
+    "effective": "2026-09-18T18:26:00-06:00",
+    "onset": "2026-09-18T18:26:00-06:00",
+    "expires": "2026-09-18T19:00:00-06:00",
+    "ends": null,
+    "status": "Actual",
+    "messageType": "Alert",
+    "category": "Met",
+    "severity": "Moderate",
+    "certainty": "Observed",
+    "urgency": "Expected",
+    "event": "Special Weather Statement",
+    "sender": "w-nws.webmaster@noaa.gov",
+    "senderName": "NWS Albuquerque NM",
+    "headline": "Special Weather Statement issued September 18 at 6:26PM MDT by NWS Albuquerque NM",
+    "description": "At 626 PM MDT, Doppler radar was tracking a strong thunderstorm 19\nmiles southwest of Dexter, or 23 miles south of Roswell, moving\nnortheast at 20 mph.\n\nHAZARD...Wind gusts up to 50 mph and half inch size hail.\n\nSOURCE...Radar indicated.\n\nIMPACT...Gusty winds could knock down tree limbs and blow around\nunsecured objects. Minor damage to outdoor objects is\npossible.\n\nLocations impacted include...\nSouthern Roswell, Dexter, Roswell Correctional Facility and\nGreenfield.\n\nThis includes Highway 285 between Mile Markers 89 and 104.",
+    "instruction": "Monitor the weather situation closely and be alert for threatening\nweather conditions.",
+    "response": "Execute",
+    "note": null,
+    "parameters": {
+     "AWIPSidentifier": [
+      "SPSABQ"
+     ],
+     "WMOidentifier": [
+      "WWUS85 KABQ 190026"
+     ],
+     "NWSheadline": [
+      "A STRONG THUNDERSTORM WILL IMPACT CENTRAL CHAVES COUNTY UNTIL 7 PM MDT"
+     ],
+     "eventMotionDescription": [
+      "2026-09-19T00:26:00-00:00...storm...228DEG...15KT...33.06,-104.67"
+     ],
+     "maxWindGust": [
+      "50 MPH"
+     ],
+     "maxHailSize": [
+      "0.50"
+     ],
+     "BLOCKCHANNEL": [
+      "EAS",
+      "NWEM",
+      "CMAS"
+     ],
+     "EAS-ORG": [
+      "WXR"
+     ]
+    },
+    "scope": "Public",
+    "code": "IPAWSv1.0",
+    "language": "en-US",
+    "web": "http://www.weather.gov",
+    "eventCode": {
+     "SAME": [
+      "SPS"
+     ],
+     "NationalWeatherService": [
+      "SPS"
+     ]
+    }
+   }
+  },
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1ac048039e821cf56d2ad124cf5d8044c03c2719.001.1",
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -107.63,
+       34.58
+      ],
+      [
+       -107.58,
+       34.63
+      ],
+      [
+       -107.36,
+       34.69
+      ],
+      [
+       -107.3,
+       34.44
+      ],
+      [
+       -107.35,
+       34.42
+      ],
+      [
+       -107.55,
+       34.4
+      ],
+      [
+       -107.73,
+       34.48
+      ],
+      [
+       -107.63,
+       34.58
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1ac048039e821cf56d2ad124cf5d8044c03c2719.001.1",
+    "@type": "wx:Alert",
+    "id": "urn:oid:2.49.0.1.840.0.1ac048039e821cf56d2ad124cf5d8044c03c2719.001.1",
+    "areaDesc": "Cibola, NM; Socorro, NM",
+    "geocode": {
+     "SAME": [
+      "035006",
+      "035053"
+     ],
+     "UGC": [
+      "NMC006",
+      "NMC053"
+     ]
+    },
+    "affectedZones": [
+     "https://api.weather.gov/zones/county/NMC006",
+     "https://api.weather.gov/zones/county/NMC053"
+    ],
+    "references": [],
+    "sent": "2026-09-18T18:22:00-06:00",
+    "effective": "2026-09-18T18:22:00-06:00",
+    "onset": "2026-09-18T18:22:00-06:00",
+    "expires": "2026-09-18T20:15:00-06:00",
+    "ends": "2026-09-18T20:15:00-06:00",
+    "status": "Actual",
+    "messageType": "Alert",
+    "category": "Met",
+    "severity": "Minor",
+    "certainty": "Likely",
+    "urgency": "Expected",
+    "event": "Flood Advisory",
+    "sender": "w-nws.webmaster@noaa.gov",
+    "senderName": "NWS Albuquerque NM",
+    "headline": "Flood Advisory issued September 18 at 6:22PM MDT until September 18 at 8:15PM MDT by NWS Albuquerque NM",
+    "description": "* WHAT...Arroyo and small stream flooding caused by excessive\nrainfall is expected.\n\n* WHERE...Northwestern Socorro County in central New Mexico...\nSouthern Cibola County in west central New Mexico...\n\n* WHEN...Until 815 PM MDT.\n\n* IMPACTS...Minor flooding in low-lying and poor drainage areas.\n\n* ADDITIONAL DETAILS...\n- At 620 PM MDT, Doppler radar indicated heavy rain due to\nthunderstorms. This  will cause arroyo and small stream flooding.\nBetween 1 and 1.5 inches of rain have fallen.\n- Additional rainfall amounts of 0.5 to 1 inch are expected over\nthe area. This additional rain will result in minor flooding.\n- Some locations that will experience flooding include...\nAlamo.\n- Indian Route 169 north of Alamo, NM crossing the Waterbury Draw.\n- http://www.weather.gov/safety/flood",
+    "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+    "response": "Avoid",
+    "note": null,
+    "parameters": {
+     "AWIPSidentifier": [
+      "FLSABQ"
+     ],
+     "WMOidentifier": [
+      "WGUS85 KABQ 190022"
+     ],
+     "NWSheadline": [
+      "FLOOD ADVISORY IN EFFECT UNTIL 815 PM MDT THIS EVENING"
+     ],
+     "BLOCKCHANNEL": [
+      "EAS",
+      "NWEM",
+      "CMAS"
+     ],
+     "VTEC": [
+      "/O.NEW.KABQ.FA.Y.0318.260919T0022Z-260919T0215Z/"
+     ],
+     "eventEndingTime": [
+      "2026-09-18T20:15:00-06:00"
+     ]
+    },
+    "scope": "Public",
+    "code": "IPAWSv1.0",
+    "language": "en-US",
+    "web": "http://www.weather.gov",
+    "eventCode": {
+     "SAME": [
+      "NWS"
+     ],
+     "NationalWeatherService": [
+      "FAY"
+     ]
+    }
+   }
+  },
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0-KEEPALIVE-40030",
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0-KEEPALIVE-40030",
+    "@type": "wx:Alert",
+    "id": "urn:oid:2.49.0.1.840.0-KEEPALIVE-40030",
+    "areaDesc": "Montgomery",
+    "geocode": {
+     "SAME": [
+      "024031"
+     ],
+     "UGC": [
+      "MDC031"
+     ]
+    },
+    "affectedZones": [
+     "https://api.weather.gov/zones/county/MDC031"
+    ],
+    "references": [],
+    "sent": "2026-09-19T00:23:09+00:00",
+    "effective": "2026-09-19T00:23:09+00:00",
+    "onset": null,
+    "expires": "2026-09-19T00:33:09+00:00",
+    "ends": null,
+    "status": "Test",
+    "messageType": "Alert",
+    "category": "Met",
+    "severity": "Unknown",
+    "certainty": "Unknown",
+    "urgency": "Unknown",
+    "event": "Test Message",
+    "sender": "w-nws.webmaster@noaa.gov",
+    "senderName": "NWS",
+    "headline": null,
+    "description": "Monitoring message only. Please disregard.",
+    "instruction": "Monitoring message only. Please disregard.",
+    "response": "None",
+    "note": "This is only a test for monitoring of vital dissemination systems.",
+    "parameters": {
+     "AWIPSidentifier": [
+      "KEPWBC"
+     ],
+     "WMOidentifier": [
+      "NZUS91 KWBC 190023"
+     ],
+     "BLOCKCHANNEL": [
+      "CMAS",
+      "EAS",
+      "NWEM"
+     ]
+    },
+    "scope": "Public",
+    "code": "IPAWSv1.0",
+    "language": "en-US",
+    "web": "http://www.weather.gov",
+    "eventCode": {
+     "SAME": [
+      "NWS"
+     ],
+     "NationalWeatherService": [
+      "TST"
+     ]
+    }
+   }
+  }
+ ],
+ "title": "Recorded subset of live NWS alerts",
+ "updated": "2026-09-19T00:26:47+00:00"
+}
