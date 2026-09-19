@@ -1,6 +1,26 @@
-// Package weather is Go weather library: a provider-agnostic vocabulary for conditions, wind and official alerts, with Open-Meteo, NWS and NOAA SWPC adapters.
+// Package weather turns third-party weather observations into one stable
+// vocabulary.
 //
-// Replace this scaffold with the package's real implementation.
+// It is the sibling of go-astronomy and differs from it in one way worth
+// stating first: go-astronomy computes and go-weather observes. Where the Sun
+// is follows from a date and a coordinate, with no truth outside the
+// arithmetic. Whether it is raining is a measurement somebody took, so it can
+// only come from a feed.
+//
+// That difference is the whole shape of the package. The core here is pure --
+// the vocabulary, and the judgement that maps a provider's values onto it --
+// and every network call lives in an optional adapter subpackage the core
+// does not import. A consumer that already has an observation never touches
+// the network at all, and the core's tests run with nothing listening.
+//
+// The package stores nothing and schedules nothing. Every observation carries
+// the provider's own expiry where the provider states one, and what a
+// consumer does with that is the consumer's business: a library that reaches
+// for a cache has opinions about deployment that a library has no business
+// having.
+//
+// It is stateless and concurrency-safe. time.Time is always a parameter and
+// never captured at construction.
 package weather
 
 /*
