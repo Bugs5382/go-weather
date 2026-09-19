@@ -26,9 +26,26 @@ tasks:
     desc: Run tests with coverage reporting
     cmds:
       - go test ./... -cover
+  purity:
+    desc: >
+      Prove the core reaches no network. The whole design rests on it: the
+      vocabulary and the extraction are pure, and every fetch lives in an
+      adapter subpackage the core does not import. An accidental import would
+      be invisible in every test and would force an HTTP client on consumers
+      that only wanted the vocabulary.
+    cmds:
+      - |
+        if go list -deps . | grep -qx 'net/http'; then
+          echo "the core imports net/http, directly or transitively:"
+          go list -deps . | grep -x 'net/http'
+          echo "move whatever fetches into provider/, alert/ or space/"
+          exit 1
+        fi
+        echo "core is offline: no net/http in its dependency graph"
+
   lint:
     desc: Run all linters
-    deps: [test]
+    deps: [test, purity]
     cmds:
       - |
         unformatted="$(gofmt -l .)"
