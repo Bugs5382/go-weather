@@ -227,6 +227,68 @@ func TestNonSuccessIsNotCoverage(t *testing.T) {
 	}
 }
 
+// A point outside the United States is not a provider failure. NWS answers a
+// foreign coordinate with 400 and "out of bounds", which is a complete and
+// correct answer to the question asked: nobody is watching there.
+//
+// Reporting it as an error would be wrong twice. It would collapse "we do not
+// know" into "nothing is happening" at the consumer, which is the one
+// distinction Covered exists to preserve, and it would log an error for every
+// reader outside the US on every poll for ever.
+func TestOutOfBoundsIsNotCoverageAndNotAnError(t *testing.T) {
+	t.Parallel()
+
+	// The live body, recorded from api.weather.gov for 48.85,2.35.
+	const body = `{
+		"correlationId": "2710a4",
+		"title": "Invalid Parameter",
+		"type": "https://api.weather.gov/problems/InvalidParameter",
+		"status": 400,
+		"detail": "Parameter \"point\" is invalid: out of bounds"
+	}`
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(body))
+	}))
+	defer srv.Close()
+
+	c := nws.New()
+	c.BaseURL = srv.URL
+	got, err := c.Active(context.Background(), weather.Coordinate{Lat: 48.85, Lng: 2.35})
+	if err != nil {
+		t.Fatalf("out of bounds should be an answer, not an error: %v", err)
+	}
+	if got.Covered {
+		t.Error("a place outside the feed must not report coverage")
+	}
+	if len(got.Alerts) != 0 {
+		t.Error("no alerts where there is no feed")
+	}
+}
+
+// A 400 that is not about the point staying an error, so a genuine bad
+// request is not quietly read as a foreign coordinate.
+func TestOtherBadRequestsStayErrors(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"title":"Invalid Parameter","detail":"Parameter \"limit\" is invalid"}`))
+	}))
+	defer srv.Close()
+
+	c := nws.New()
+	c.BaseURL = srv.URL
+	got, err := c.Active(context.Background(), weather.Coordinate{Lat: 40.68, Lng: -73.94})
+	if err == nil {
+		t.Fatal("a bad request that is not about the point is still a failure")
+	}
+	if got.Covered {
+		t.Error("a failed request must never report coverage")
+	}
+}
+
 // NWS asks callers to identify themselves, and a library that does not is a
 // library that gets blocked.
 func TestSendsAnIdentifyingUserAgent(t *testing.T) {

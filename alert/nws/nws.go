@@ -131,6 +131,31 @@ func severityOf(s string) alert.Severity {
 	}
 }
 
+// problem is the RFC 7807 shape NWS returns for a rejected request.
+type problem struct {
+	Detail string `json:"detail"`
+}
+
+// outOfBounds reports whether a 400 body is NWS saying the point is outside
+// its coverage, rather than saying the request was malformed.
+//
+// Matched on the detail text because that is the only place NWS distinguishes
+// the two: both arrive as type InvalidParameter with status 400, so the
+// status alone cannot tell a foreign coordinate from a genuine bug in the
+// query. A body that does not parse, or says something else, stays an error
+// -- the failure mode to avoid is reading a real fault as "no feed here" and
+// silently never showing a warning again.
+func outOfBounds(body []byte) bool {
+	var p problem
+	if err := json.Unmarshal(body, &p); err != nil {
+		return false
+	}
+
+	detail := strings.ToLower(p.Detail)
+
+	return strings.Contains(detail, "point") && strings.Contains(detail, "out of bounds")
+}
+
 // Decode turns a response body into a Report.
 //
 // Exported so the mapping can be tested against recorded feeds with nothing
@@ -204,13 +229,6 @@ func (c *Client) Active(ctx context.Context, at weather.Coordinate) (alert.Repor
 	}
 	defer func() { _ = res.Body.Close() }()
 
-	if res.StatusCode != http.StatusOK {
-		return alert.Report{}, apperr.Coded(
-			weather.CodeProviderUnavailable,
-			fmt.Errorf("%w: status %d", weather.ErrProviderUnavailable, res.StatusCode),
-		)
-	}
-
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return alert.Report{}, apperr.Coded(
@@ -218,5 +236,23 @@ func (c *Client) Active(ctx context.Context, at weather.Coordinate) (alert.Repor
 			fmt.Errorf("%w: %v", weather.ErrProviderUnavailable, err),
 		)
 	}
+
+	if res.StatusCode != http.StatusOK {
+		// A point outside the United States is a complete answer, not a
+		// failure: nobody is watching there, which is exactly what an
+		// uncovered report says. Reporting it as an error would collapse "we
+		// do not know" into "nothing is happening" at the consumer -- the one
+		// distinction Covered exists to preserve -- and would log a failure
+		// for every reader outside the US on every poll for ever.
+		if res.StatusCode == http.StatusBadRequest && outOfBounds(body) {
+			return alert.Report{Covered: false}, nil
+		}
+
+		return alert.Report{}, apperr.Coded(
+			weather.CodeProviderUnavailable,
+			fmt.Errorf("%w: status %d", weather.ErrProviderUnavailable, res.StatusCode),
+		)
+	}
+
 	return Decode(body)
 }
