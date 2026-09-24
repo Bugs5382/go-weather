@@ -45,4 +45,7 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           version: v2.12.2
+          # Build from source with the job's Go, so a newer go.mod never
+          # outruns the toolchain the prebuilt binary was compiled with.
+          install-mode: goinstall
           args: --timeout=3m
