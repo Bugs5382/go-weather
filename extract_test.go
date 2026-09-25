@@ -147,3 +147,18 @@ func TestLowVisibilityBecomesFog(t *testing.T) {
 		t.Errorf("clear with no visibility figure = %q, want CLEAR", got)
 	}
 }
+
+// A visibility the provider did not report cannot fog the sky, whatever
+// number happens to sit in the field beside the flag (issue #19).
+func TestMissingVisibilityNeverFogs(t *testing.T) {
+	t.Parallel()
+
+	q := weather.Quantities{VisibilityMetres: 300, Missing: weather.Missing{Visibility: true}}
+	got, err := weather.ConditionFromWMO(3, q)
+	if err != nil {
+		t.Fatalf("unexpected error %v", err)
+	}
+	if got != weather.Cloudy {
+		t.Errorf("overcast with a missing visibility = %q, want CLOUDY", got)
+	}
+}

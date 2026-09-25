@@ -167,3 +167,132 @@ func TestBadCoordinateIsRejectedWithoutARequest(t *testing.T) {
 		t.Error("a bad coordinate should not reach the provider")
 	}
 }
+
+// Open-Meteo answers null for a quantity its model does not carry at a place,
+// and a null decoded straight into a float64 is a zero. A missing visibility
+// then reads as fog and a missing rain rate as dry, so each quantity is
+// checked three ways: null must be missing, a measured zero must stay a
+// reported zero, and a real value must come through as itself (issue #19).
+func TestNullQuantityIsMissingNotZero(t *testing.T) {
+	t.Parallel()
+
+	type reading func(weather.Quantities) (float64, bool)
+
+	fields := []struct {
+		name    string
+		json    string
+		read    reading
+		present string
+		want    float64
+	}{
+		{"cloud cover", "cloud_cover", weather.Quantities.CloudCoverReading, "40", 0.4},
+		{"precipitation", "precipitation", weather.Quantities.PrecipitationReading, "1.5", 1.5},
+		{"snowfall", "snowfall", weather.Quantities.SnowfallReading, "0.7", 0.7},
+		{"visibility", "visibility", weather.Quantities.VisibilityReading, "24140", 24140},
+	}
+
+	// body is a full response with one field overridden and the rest at
+	// ordinary reported values, so a test of one field cannot pass on
+	// another's behalf.
+	body := func(field, value string) []byte {
+		vals := map[string]string{
+			"cloud_cover": "10", "precipitation": "0.2", "snowfall": "0.1", "visibility": "30000",
+		}
+		vals[field] = value
+		return []byte(`{"elevation":10,"current":{"time":"2026-09-18T12:00","interval":900,` +
+			`"weather_code":3,"cloud_cover":` + vals["cloud_cover"] +
+			`,"precipitation":` + vals["precipitation"] +
+			`,"snowfall":` + vals["snowfall"] +
+			`,"visibility":` + vals["visibility"] +
+			`,"wind_speed_10m":5,"wind_gusts_10m":9,"wind_direction_10m":270}}`)
+	}
+
+	for _, f := range fields {
+		t.Run(f.name+" null", func(t *testing.T) {
+			t.Parallel()
+			got, err := openmeteo.Decode(body(f.json, "null"))
+			if err != nil {
+				t.Fatalf("decode: %v", err)
+			}
+			if v, ok := f.read(got.Quantities); ok {
+				t.Errorf("null %s read as reported %v, want missing", f.name, v)
+			}
+		})
+
+		t.Run(f.name+" zero", func(t *testing.T) {
+			t.Parallel()
+			got, err := openmeteo.Decode(body(f.json, "0"))
+			if err != nil {
+				t.Fatalf("decode: %v", err)
+			}
+			v, ok := f.read(got.Quantities)
+			if !ok {
+				t.Fatalf("measured zero %s read as missing", f.name)
+			}
+			if v != 0 {
+				t.Errorf("%s = %v, want 0", f.name, v)
+			}
+		})
+
+		t.Run(f.name+" present", func(t *testing.T) {
+			t.Parallel()
+			got, err := openmeteo.Decode(body(f.json, f.present))
+			if err != nil {
+				t.Fatalf("decode: %v", err)
+			}
+			v, ok := f.read(got.Quantities)
+			if !ok {
+				t.Fatalf("%s read as missing", f.name)
+			}
+			if v != f.want {
+				t.Errorf("%s = %v, want %v", f.name, v, f.want)
+			}
+		})
+	}
+}
+
+// A field left out of the response altogether is as missing as a null one.
+// Open-Meteo drops nothing it was asked for today, but a decoder that only
+// handled the explicit null would turn the day it does into zeros again.
+func TestAbsentQuantityIsMissing(t *testing.T) {
+	t.Parallel()
+
+	got, err := openmeteo.Decode([]byte(`{"elevation":10,"current":{
+      "time":"2026-09-18T12:00","interval":900,"weather_code":3,
+      "wind_speed_10m":5,"wind_gusts_10m":9,"wind_direction_10m":270}}`))
+	if err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	want := weather.Missing{CloudCover: true, Precipitation: true, Snowfall: true, Visibility: true}
+	if got.Quantities.Missing != want {
+		t.Errorf("missing = %+v, want %+v", got.Quantities.Missing, want)
+	}
+}
+
+// A null visibility must not fog the sky, and a real low one still must: the
+// override reads presence, not the zero a null used to become.
+func TestNullVisibilityDoesNotFogTheSky(t *testing.T) {
+	t.Parallel()
+
+	got, err := openmeteo.Decode([]byte(`{"elevation":10,"current":{
+      "time":"2026-09-18T12:00","interval":900,"weather_code":3,"cloud_cover":90,
+      "precipitation":0,"snowfall":0,"visibility":null,
+      "wind_speed_10m":5,"wind_gusts_10m":9,"wind_direction_10m":270}}`))
+	if err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if got.Condition != weather.Cloudy {
+		t.Errorf("overcast with no visibility figure = %q, want CLOUDY", got.Condition)
+	}
+
+	got, err = openmeteo.Decode([]byte(`{"elevation":10,"current":{
+      "time":"2026-09-18T12:00","interval":900,"weather_code":3,"cloud_cover":90,
+      "precipitation":0,"snowfall":0,"visibility":300,
+      "wind_speed_10m":5,"wind_gusts_10m":9,"wind_direction_10m":270}}`))
+	if err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if got.Condition != weather.Fog {
+		t.Errorf("overcast at 300m = %q, want FOG", got.Condition)
+	}
+}

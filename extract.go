@@ -88,15 +88,19 @@ func precipitating(c Condition) bool {
 //
 // Returns a CodeUnknownProviderCode error for a code with no mapping.
 //
-// A zero VisibilityMetres is read as "not reported" rather than as zero
-// visibility. The alternative would fog every sky whose provider omitted the
-// field, which is the more damaging reading of an absent number.
+// A visibility flagged in Missing never overrules the code. A zero
+// VisibilityMetres is also still read as "not reported" rather than as zero
+// visibility, because that is what it meant before Missing existed: a
+// Quantities built by hand without the flag would otherwise fog every sky
+// whose author left the field out, which is the more damaging reading of an
+// absent number.
 func ConditionFromWMO(code int, q Quantities) (Condition, error) {
 	c, ok := wmoConditions[code]
 	if !ok {
 		return "", apperr.Coded(CodeUnknownProviderCode, ErrUnknownProviderCode)
 	}
-	if !precipitating(c) && q.VisibilityMetres > 0 && q.VisibilityMetres < fogVisibilityMetres {
+	visibility, reported := q.VisibilityReading()
+	if !precipitating(c) && reported && visibility > 0 && visibility < fogVisibilityMetres {
 		return Fog, nil
 	}
 	return c, nil

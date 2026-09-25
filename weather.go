@@ -103,6 +103,65 @@ type Quantities struct {
 	SnowfallCMPerHour float64
 	// VisibilityMetres is how far can be seen.
 	VisibilityMetres float64
+
+	// Missing names the quantities the provider did not report. A missing
+	// quantity leaves its field at zero, and zero is a real reading for every
+	// one of them: a clear sky, a dry hour, fog. Read the field only where
+	// Missing says it was reported, or use the Reading accessors, which
+	// answer both at once.
+	//
+	// Its zero value is "everything reported", so a Quantities written
+	// without it means what it meant before the flag existed.
+	Missing Missing
+}
+
+// Missing records, per quantity, that the provider gave no reading.
+//
+// A flag for absence rather than one for presence, because only that way
+// round is the zero value right: an adapter must say what it did not get, and
+// a caller that builds a Quantities by hand gets reported values without
+// having to say so.
+type Missing struct {
+	CloudCover    bool
+	Precipitation bool
+	Snowfall      bool
+	Visibility    bool
+}
+
+// Any reports whether any quantity is missing.
+func (m Missing) Any() bool {
+	return m.CloudCover || m.Precipitation || m.Snowfall || m.Visibility
+}
+
+// CloudCoverReading returns the cloud cover and whether it was reported. A
+// missing reading returns (0, false), whatever the field holds.
+func (q Quantities) CloudCoverReading() (float64, bool) {
+	return reading(q.CloudCover, q.Missing.CloudCover)
+}
+
+// PrecipitationReading returns the precipitation rate and whether it was
+// reported. A missing reading returns (0, false), whatever the field holds.
+func (q Quantities) PrecipitationReading() (float64, bool) {
+	return reading(q.PrecipitationMMPerHour, q.Missing.Precipitation)
+}
+
+// SnowfallReading returns the snowfall rate and whether it was reported. A
+// missing reading returns (0, false), whatever the field holds.
+func (q Quantities) SnowfallReading() (float64, bool) {
+	return reading(q.SnowfallCMPerHour, q.Missing.Snowfall)
+}
+
+// VisibilityReading returns the visibility and whether it was reported. A
+// missing reading returns (0, false), whatever the field holds.
+func (q Quantities) VisibilityReading() (float64, bool) {
+	return reading(q.VisibilityMetres, q.Missing.Visibility)
+}
+
+func reading(v float64, missing bool) (float64, bool) {
+	if missing {
+		return 0, false
+	}
+	return v, true
 }
 
 // Observation is one answer about one place at one instant.
