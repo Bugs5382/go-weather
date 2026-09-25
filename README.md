@@ -54,6 +54,18 @@ Wind sits beside the condition and never inside it: any condition can be calm or
 
 Continuous quantities sit beside it too — cloud cover, precipitation, snowfall, visibility — because eight discrete states can only be cut between and numbers can be interpolated.
 
+**A missing reading is not a zero.** Zero is a real value for every quantity: a clear sky, a dry hour, fog. When a provider gives no reading (Open-Meteo answers `null` where its model has no value at a place), the field stays `0` and `Quantities.Missing` says so. Ask with the accessors, which answer both at once:
+
+```go
+if v, ok := obs.Quantities.VisibilityReading(); ok {
+    drawHaze(v) // a measured visibility, zero included
+} else {
+    // no reading: draw nothing rather than fog
+}
+```
+
+`CloudCoverReading`, `PrecipitationReading`, `SnowfallReading` and `VisibilityReading` each return `(value, reported)`. The zero `Missing` means "everything reported", so a `Quantities` built by hand without it keeps its old meaning. A missing visibility never turns a sky into fog.
+
 ## 🚨 Alerts
 
 An alert is something a public authority has *said*; a condition is something the sky is *doing*. They are separate types so a severity can never end up driving a rendering decision, and a tornado warning under a clear sky stays a clear sky with a warning beside it.

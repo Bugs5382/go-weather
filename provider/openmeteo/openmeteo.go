@@ -86,16 +86,29 @@ type response struct {
 		// Interval is how often the provider updates this value, in seconds.
 		// It is the provider stating its own cadence, which is what makes an
 		// expiry reportable rather than invented.
-		Interval      int     `json:"interval"`
-		WeatherCode   int     `json:"weather_code"`
-		CloudCover    float64 `json:"cloud_cover"`
-		Precipitation float64 `json:"precipitation"`
-		Snowfall      float64 `json:"snowfall"`
-		Visibility    float64 `json:"visibility"`
-		WindSpeed     float64 `json:"wind_speed_10m"`
-		WindGusts     float64 `json:"wind_gusts_10m"`
-		WindDirection float64 `json:"wind_direction_10m"`
+		Interval    int `json:"interval"`
+		WeatherCode int `json:"weather_code"`
+		// The quantities are pointers because Open-Meteo answers null for a
+		// variable its model does not carry at a place, and a null decoded
+		// into a float64 is a zero that nothing downstream can tell from a
+		// measurement (issue #19). Nil, whether from null or from a field left
+		// out, becomes Missing.
+		CloudCover    *float64 `json:"cloud_cover"`
+		Precipitation *float64 `json:"precipitation"`
+		Snowfall      *float64 `json:"snowfall"`
+		Visibility    *float64 `json:"visibility"`
+		WindSpeed     float64  `json:"wind_speed_10m"`
+		WindGusts     float64  `json:"wind_gusts_10m"`
+		WindDirection float64  `json:"wind_direction_10m"`
 	} `json:"current"`
+}
+
+// value unpacks an optional field, reporting whether it was missing.
+func value(p *float64) (float64, bool) {
+	if p == nil {
+		return 0, true
+	}
+	return *p, false
 }
 
 // Decode turns a response body into an Observation.
@@ -112,14 +125,15 @@ func Decode(body []byte) (weather.Observation, error) {
 		)
 	}
 
-	q := weather.Quantities{
-		// Open-Meteo reports cover as a percentage and the vocabulary is a
-		// fraction. An off-by-one-hundred here is invisible everywhere else.
-		CloudCover:             r.Current.CloudCover / 100,
-		PrecipitationMMPerHour: r.Current.Precipitation,
-		SnowfallCMPerHour:      r.Current.Snowfall,
-		VisibilityMetres:       r.Current.Visibility,
-	}
+	var q weather.Quantities
+	var cover float64
+	cover, q.Missing.CloudCover = value(r.Current.CloudCover)
+	// Open-Meteo reports cover as a percentage and the vocabulary is a
+	// fraction. An off-by-one-hundred here is invisible everywhere else.
+	q.CloudCover = cover / 100
+	q.PrecipitationMMPerHour, q.Missing.Precipitation = value(r.Current.Precipitation)
+	q.SnowfallCMPerHour, q.Missing.Snowfall = value(r.Current.Snowfall)
+	q.VisibilityMetres, q.Missing.Visibility = value(r.Current.Visibility)
 
 	condition, err := weather.ConditionFromWMO(r.Current.WeatherCode, q)
 	if err != nil {
