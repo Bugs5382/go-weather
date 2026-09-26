@@ -66,6 +66,10 @@ if v, ok := obs.Quantities.VisibilityReading(); ok {
 
 `CloudCoverReading`, `PrecipitationReading`, `SnowfallReading` and `VisibilityReading` each return `(value, reported)`. The zero `Missing` means "everything reported", so a `Quantities` built by hand without it keeps its old meaning. A missing visibility never turns a sky into fog.
 
+Wind works the same way. `Wind.Missing` flags a speed, gust or bearing the provider did not give, and `SpeedReading`, `GustReading` and `DirectionReading` return `(value, reported)`, so a missing speed is never drawn as calm.
+
+A missing condition is unknown, not clear. When Open-Meteo gives no `weather_code`, `Observation.ConditionMissing` is set and `Condition` is left empty (not `Valid`). `ConditionReading` returns `(condition, reported)`. The rest of the observation still comes through.
+
 ## 🚨 Alerts
 
 An alert is something a public authority has *said*; a condition is something the sky is *doing*. They are separate types so a severity can never end up driving a rendering decision, and a tornado warning under a clear sky stays a clear sky with a warning beside it.

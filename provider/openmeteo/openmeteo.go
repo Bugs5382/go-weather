@@ -86,8 +86,11 @@ type response struct {
 		// Interval is how often the provider updates this value, in seconds.
 		// It is the provider stating its own cadence, which is what makes an
 		// expiry reportable rather than invented.
-		Interval    int `json:"interval"`
-		WeatherCode int `json:"weather_code"`
+		Interval int `json:"interval"`
+		// WeatherCode is a pointer for the same reason as the quantities, and
+		// with a worse failure: a null code decoded into an int is 0, and WMO
+		// 0 is a clear sky (issue #21). Nil becomes ConditionMissing.
+		WeatherCode *int `json:"weather_code"`
 		// The quantities are pointers because Open-Meteo answers null for a
 		// variable its model does not carry at a place, and a null decoded
 		// into a float64 is a zero that nothing downstream can tell from a
@@ -97,9 +100,12 @@ type response struct {
 		Precipitation *float64 `json:"precipitation"`
 		Snowfall      *float64 `json:"snowfall"`
 		Visibility    *float64 `json:"visibility"`
-		WindSpeed     float64  `json:"wind_speed_10m"`
-		WindGusts     float64  `json:"wind_gusts_10m"`
-		WindDirection float64  `json:"wind_direction_10m"`
+		// Wind is optional the same way: a null speed decoded into a float64
+		// is a calm, and a null bearing is a wind out of the north (issue
+		// #21). Nil becomes Wind.Missing.
+		WindSpeed     *float64 `json:"wind_speed_10m"`
+		WindGusts     *float64 `json:"wind_gusts_10m"`
+		WindDirection *float64 `json:"wind_direction_10m"`
 	} `json:"current"`
 }
 
@@ -135,9 +141,24 @@ func Decode(body []byte) (weather.Observation, error) {
 	q.SnowfallCMPerHour, q.Missing.Snowfall = value(r.Current.Snowfall)
 	q.VisibilityMetres, q.Missing.Visibility = value(r.Current.Visibility)
 
-	condition, err := weather.ConditionFromWMO(r.Current.WeatherCode, q)
-	if err != nil {
-		return weather.Observation{}, err
+	var w weather.Wind
+	w.SpeedMPH, w.Missing.Speed = value(r.Current.WindSpeed)
+	w.GustMPH, w.Missing.Gust = value(r.Current.WindGusts)
+	w.FromDegrees, w.Missing.Direction = value(r.Current.WindDirection)
+
+	// No code means the sky is unknown. It is not an error: the rest of the
+	// observation is still good, and failing the whole decode would throw a
+	// real wind and real quantities away for want of a headline. Nor is it
+	// derived from visibility, because the override exists to correct a code,
+	// not to stand in for one.
+	var condition weather.Condition
+	conditionMissing := r.Current.WeatherCode == nil
+	if !conditionMissing {
+		var err error
+		condition, err = weather.ConditionFromWMO(*r.Current.WeatherCode, q)
+		if err != nil {
+			return weather.Observation{}, err
+		}
 	}
 
 	// The request asks for no timezone, so Open-Meteo answers in GMT and
@@ -160,16 +181,13 @@ func Decode(body []byte) (weather.Observation, error) {
 	}
 
 	return weather.Observation{
-		At:         at,
-		ExpiresAt:  expires,
-		Condition:  condition,
-		Quantities: q,
-		Wind: weather.Wind{
-			SpeedMPH:    r.Current.WindSpeed,
-			GustMPH:     r.Current.WindGusts,
-			FromDegrees: r.Current.WindDirection,
-		},
-		ElevationMetres: r.Elevation,
+		At:               at,
+		ExpiresAt:        expires,
+		Condition:        condition,
+		ConditionMissing: conditionMissing,
+		Quantities:       q,
+		Wind:             w,
+		ElevationMetres:  r.Elevation,
 	}, nil
 }
 

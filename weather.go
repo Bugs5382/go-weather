@@ -83,6 +83,49 @@ type Wind struct {
 	// convention: 270 comes out of the west and pushes towards the east, so
 	// something leaning in it leans away from this bearing.
 	FromDegrees float64
+
+	// Missing names the wind readings the provider did not give. A missing
+	// reading leaves its field at zero, and zero is a real reading for each:
+	// a calm, a still air between gusts, a wind out of the north. Read the
+	// field only where Missing says it was reported, or use the Reading
+	// accessors, which answer both at once.
+	//
+	// Its zero value is "everything reported", so a Wind written without it
+	// means what it meant before the flag existed.
+	Missing WindMissing
+}
+
+// WindMissing records, per wind reading, that the provider gave no value.
+//
+// A flag for absence rather than presence, for the reason Missing gives: only
+// that way round is the zero value right.
+type WindMissing struct {
+	Speed     bool
+	Gust      bool
+	Direction bool
+}
+
+// Any reports whether any wind reading is missing.
+func (m WindMissing) Any() bool {
+	return m.Speed || m.Gust || m.Direction
+}
+
+// SpeedReading returns the sustained speed and whether it was reported. A
+// missing reading returns (0, false), whatever the field holds.
+func (w Wind) SpeedReading() (float64, bool) {
+	return reading(w.SpeedMPH, w.Missing.Speed)
+}
+
+// GustReading returns the peak gust and whether it was reported. A missing
+// reading returns (0, false), whatever the field holds.
+func (w Wind) GustReading() (float64, bool) {
+	return reading(w.GustMPH, w.Missing.Gust)
+}
+
+// DirectionReading returns the bearing the wind blows from and whether it was
+// reported. A missing reading returns (0, false), whatever the field holds.
+func (w Wind) DirectionReading() (float64, bool) {
+	return reading(w.FromDegrees, w.Missing.Direction)
 }
 
 // Quantities are the continuous values a renderer actually draws from.
@@ -172,8 +215,17 @@ type Observation struct {
 	// the provider did not say, and this library will not invent a value on
 	// its behalf.
 	ExpiresAt time.Time
-	// Condition is the headline: one of eight.
+	// Condition is the headline: one of eight, or empty where
+	// ConditionMissing says the provider gave none.
 	Condition Condition
+	// ConditionMissing reports that the provider gave no condition, so the
+	// sky is unknown. The adapter then leaves Condition empty, which is not
+	// Valid, rather than letting it fall to whatever a zero code maps to: WMO
+	// code 0 is a clear sky, and "no answer" is not "clear".
+	//
+	// Its zero value is "reported", so an Observation written without it
+	// means what it meant before the flag existed.
+	ConditionMissing bool
 	// Quantities are what a renderer draws from.
 	Quantities Quantities
 	// Wind is beside the condition, never inside it.
@@ -183,6 +235,15 @@ type Observation struct {
 	// consumer wants it: the horizon dips with height, which moves sunrise by
 	// minutes. This library does nothing with it.
 	ElevationMetres float64
+}
+
+// ConditionReading returns the condition and whether it was reported. A
+// missing condition returns ("", false), whatever the field holds.
+func (o Observation) ConditionReading() (Condition, bool) {
+	if o.ConditionMissing {
+		return "", false
+	}
+	return o.Condition, true
 }
 
 // Stale reports whether the provider's own expiry has passed.

@@ -296,3 +296,158 @@ func TestNullVisibilityDoesNotFogTheSky(t *testing.T) {
 		t.Errorf("overcast at 300m = %q, want FOG", got.Condition)
 	}
 }
+
+// Wind speed, gusts and bearing come back null from the same endpoint, and a
+// null decoded into a float64 reads as a calm out of the north. Each is
+// checked three ways, as the quantities are: null is missing, a measured zero
+// stays a reported zero, and a real value comes through as itself (issue #21).
+func TestNullWindIsMissingNotZero(t *testing.T) {
+	t.Parallel()
+
+	type reading func(weather.Wind) (float64, bool)
+
+	fields := []struct {
+		name    string
+		json    string
+		read    reading
+		present string
+		want    float64
+	}{
+		{"speed", "wind_speed_10m", weather.Wind.SpeedReading, "12.5", 12.5},
+		{"gust", "wind_gusts_10m", weather.Wind.GustReading, "31", 31},
+		{"direction", "wind_direction_10m", weather.Wind.DirectionReading, "270", 270},
+	}
+
+	// body is a full response with one wind field overridden and the other
+	// two at ordinary reported values.
+	body := func(field, value string) []byte {
+		vals := map[string]string{
+			"wind_speed_10m": "5", "wind_gusts_10m": "9", "wind_direction_10m": "180",
+		}
+		vals[field] = value
+		return []byte(`{"elevation":10,"current":{"time":"2026-09-18T12:00","interval":900,` +
+			`"weather_code":3,"cloud_cover":90,"precipitation":0,"snowfall":0,"visibility":30000,` +
+			`"wind_speed_10m":` + vals["wind_speed_10m"] +
+			`,"wind_gusts_10m":` + vals["wind_gusts_10m"] +
+			`,"wind_direction_10m":` + vals["wind_direction_10m"] + `}}`)
+	}
+
+	for _, f := range fields {
+		t.Run(f.name+" null", func(t *testing.T) {
+			t.Parallel()
+			got, err := openmeteo.Decode(body(f.json, "null"))
+			if err != nil {
+				t.Fatalf("decode: %v", err)
+			}
+			if v, ok := f.read(got.Wind); ok {
+				t.Errorf("null wind %s read as reported %v, want missing", f.name, v)
+			}
+		})
+
+		t.Run(f.name+" zero", func(t *testing.T) {
+			t.Parallel()
+			got, err := openmeteo.Decode(body(f.json, "0"))
+			if err != nil {
+				t.Fatalf("decode: %v", err)
+			}
+			v, ok := f.read(got.Wind)
+			if !ok {
+				t.Fatalf("measured zero wind %s read as missing", f.name)
+			}
+			if v != 0 {
+				t.Errorf("wind %s = %v, want 0", f.name, v)
+			}
+		})
+
+		t.Run(f.name+" present", func(t *testing.T) {
+			t.Parallel()
+			got, err := openmeteo.Decode(body(f.json, f.present))
+			if err != nil {
+				t.Fatalf("decode: %v", err)
+			}
+			v, ok := f.read(got.Wind)
+			if !ok {
+				t.Fatalf("wind %s read as missing", f.name)
+			}
+			if v != f.want {
+				t.Errorf("wind %s = %v, want %v", f.name, v, f.want)
+			}
+		})
+	}
+}
+
+// Wind fields left out altogether are as missing as null ones.
+func TestAbsentWindIsMissing(t *testing.T) {
+	t.Parallel()
+
+	got, err := openmeteo.Decode([]byte(`{"elevation":10,"current":{
+      "time":"2026-09-18T12:00","interval":900,"weather_code":3,"cloud_cover":90,
+      "precipitation":0,"snowfall":0,"visibility":30000}}`))
+	if err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	want := weather.WindMissing{Speed: true, Gust: true, Direction: true}
+	if got.Wind.Missing != want {
+		t.Errorf("wind missing = %+v, want %+v", got.Wind.Missing, want)
+	}
+}
+
+// A null weather_code decoded into an int is 0, and WMO 0 is a clear sky, so
+// a provider that said nothing about the sky was reported as saying it was
+// clear. Null and absent must read as unknown; a real 0 is still CLEAR and a
+// real code still maps (issue #21).
+func TestNullWeatherCodeIsUnknownNotClear(t *testing.T) {
+	t.Parallel()
+
+	body := func(code string) []byte {
+		return []byte(`{"elevation":10,"current":{"time":"2026-09-18T12:00","interval":900,` +
+			code + `"cloud_cover":10,"precipitation":0,"snowfall":0,"visibility":30000,` +
+			`"wind_speed_10m":5,"wind_gusts_10m":9,"wind_direction_10m":270}}`)
+	}
+
+	for _, tc := range []struct{ name, code string }{
+		{"null", `"weather_code":null,`},
+		{"absent", ``},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := openmeteo.Decode(body(tc.code))
+			if err != nil {
+				t.Fatalf("decode: %v", err)
+			}
+			if c, ok := got.ConditionReading(); ok {
+				t.Errorf("%s weather_code read as reported %q, want unknown", tc.name, c)
+			}
+			if got.Condition.Valid() {
+				t.Errorf("%s weather_code gave condition %q, want none", tc.name, got.Condition)
+			}
+			// The rest of the observation still comes through: an unknown sky
+			// is no reason to drop a good wind reading.
+			if v, ok := got.Wind.SpeedReading(); !ok || v != 5 {
+				t.Errorf("wind speed = (%v, %v), want (5, true)", v, ok)
+			}
+		})
+	}
+
+	t.Run("zero", func(t *testing.T) {
+		t.Parallel()
+		got, err := openmeteo.Decode(body(`"weather_code":0,`))
+		if err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		if c, ok := got.ConditionReading(); !ok || c != weather.Clear {
+			t.Errorf("weather_code 0 = (%q, %v), want (CLEAR, true)", c, ok)
+		}
+	})
+
+	t.Run("present", func(t *testing.T) {
+		t.Parallel()
+		got, err := openmeteo.Decode(body(`"weather_code":61,`))
+		if err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		if c, ok := got.ConditionReading(); !ok || c != weather.Rain {
+			t.Errorf("weather_code 61 = (%q, %v), want (RAIN, true)", c, ok)
+		}
+	})
+}
