@@ -9,12 +9,14 @@ permissions:
 
 jobs:
   update_release_draft:
-    name: Update Release Draft
+    name: 📝 Update Release Draft
     permissions:
       contents: write
       pull-requests: read
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: release-drafter/release-drafter@v7
+      - name: Draft release notes
+        uses: release-drafter/release-drafter@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
